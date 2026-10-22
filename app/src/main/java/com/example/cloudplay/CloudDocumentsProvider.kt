@@ -26,9 +26,17 @@ class CloudDocumentsProvider : DocumentsProvider() {
         return true
     }
 
+    private var tb: TeraBoxBackend? = null
+    private var tbKey: String? = null
+
     private fun backend(): CloudBackend {
-        val s = context!!.getSharedPreferences("cfg", Context.MODE_PRIVATE).getString("tree_uri", null)
-        return if (s != null) try { SafBackend(context!!, Uri.parse(s)) } catch (e: Exception) { demo } else demo
+        val n = context!!.getSharedPreferences("cfg", Context.MODE_PRIVATE).getString("ndus", null)
+        if (n.isNullOrEmpty()) return demo
+        if (tb == null || tbKey != n) {
+            tb = TeraBoxBackend(context!!, n)
+            tbKey = n
+        }
+        return tb!!
     }
 
     override fun isChildDocument(parentDocumentId: String, documentId: String): Boolean = true

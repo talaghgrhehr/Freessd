@@ -10,6 +10,7 @@
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
+        <activity android:name=".LoginActivity" android:exported="false"/>
         <provider
             android:name=".CloudDocumentsProvider"
             android:authorities="com.example.cloudplay.documents"
