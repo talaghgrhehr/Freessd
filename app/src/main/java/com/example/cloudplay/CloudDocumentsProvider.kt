@@ -1,7 +1,9 @@
 package com.example.cloudplay
 
+import android.content.Context
 import android.database.Cursor
 import android.database.MatrixCursor
+import android.net.Uri
 import android.os.CancellationSignal
 import android.os.ParcelFileDescriptor
 import android.provider.DocumentsContract.Document
@@ -11,7 +13,7 @@ import android.webkit.MimeTypeMap
 import java.io.FileNotFoundException
 
 class CloudDocumentsProvider : DocumentsProvider() {
-    private lateinit var backend: CloudBackend
+    private lateinit var demo: CloudBackend
     private lateinit var cache: CacheManager
 
     private val rootCols = arrayOf(Root.COLUMN_ROOT_ID, Root.COLUMN_FLAGS, Root.COLUMN_ICON, Root.COLUMN_TITLE, Root.COLUMN_DOCUMENT_ID)
@@ -19,13 +21,17 @@ class CloudDocumentsProvider : DocumentsProvider() {
         Document.COLUMN_MIME_TYPE, Document.COLUMN_LAST_MODIFIED, Document.COLUMN_FLAGS)
 
     override fun onCreate(): Boolean {
-        backend = DemoBackend(context!!)
-        cache = CacheManager(context!!, backend)
+        demo = DemoBackend(context!!)
+        cache = CacheManager(context!!)
         return true
     }
 
-    override fun isChildDocument(parentDocumentId: String, documentId: String): Boolean =
-        documentId.startsWith(parentDocumentId.trimEnd('/') + "/")
+    private fun backend(): CloudBackend {
+        val s = context!!.getSharedPreferences("cfg", Context.MODE_PRIVATE).getString("tree_uri", null)
+        return if (s != null) try { SafBackend(context!!, Uri.parse(s)) } catch (e: Exception) { demo } else demo
+    }
+
+    override fun isChildDocument(parentDocumentId: String, documentId: String): Boolean = true
 
     override fun queryRoots(projection: Array<out String>?): Cursor {
         val c = MatrixCursor(projection ?: rootCols)
@@ -56,18 +62,19 @@ class CloudDocumentsProvider : DocumentsProvider() {
 
     override fun queryDocument(documentId: String, projection: Array<out String>?): Cursor {
         val c = MatrixCursor(projection ?: docCols)
-        c.addEntry(backend.stat(documentId) ?: throw FileNotFoundException(documentId))
+        c.addEntry(backend().stat(documentId) ?: throw FileNotFoundException(documentId))
         return c
     }
 
     override fun queryChildDocuments(parentDocumentId: String, projection: Array<out String>?, sortOrder: String?): Cursor {
         val c = MatrixCursor(projection ?: docCols)
-        backend.list(parentDocumentId).forEach { c.addEntry(it) }
+        backend().list(parentDocumentId).forEach { c.addEntry(it) }
         return c
     }
 
     override fun openDocument(documentId: String, mode: String, signal: CancellationSignal?): ParcelFileDescriptor {
-        val e = backend.stat(documentId) ?: throw FileNotFoundException(documentId)
-        return ParcelFileDescriptor.open(cache.get(e), ParcelFileDescriptor.MODE_READ_ONLY)
+        val b = backend()
+        val e = b.stat(documentId) ?: throw FileNotFoundException(documentId)
+        return ParcelFileDescriptor.open(cache.get(b, e), ParcelFileDescriptor.MODE_READ_ONLY)
     }
 }

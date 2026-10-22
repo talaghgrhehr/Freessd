@@ -3,15 +3,15 @@ package com.example.cloudplay
 import android.content.Context
 import java.io.File
 
-class CacheManager(private val ctx: Context, private val backend: CloudBackend) {
+class CacheManager(private val ctx: Context) {
     private val dir = File(ctx.cacheDir, "cloud").apply { mkdirs() }
 
     private fun limitBytes(): Long =
         ctx.getSharedPreferences("cfg", Context.MODE_PRIVATE).getInt("cache_gb", 5) * 1024L * 1024L * 1024L
 
     @Synchronized
-    fun get(e: CloudEntry): File {
-        val f = File(dir, "${e.id.hashCode()}_${e.size}")
+    fun get(backend: CloudBackend, e: CloudEntry): File {
+        val f = File(dir, "${backend.javaClass.simpleName}_${e.id.hashCode()}_${e.size}_${e.modified}")
         if (f.exists() && f.length() == e.size) {
             f.setLastModified(System.currentTimeMillis())
             return f
