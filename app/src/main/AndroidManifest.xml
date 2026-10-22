@@ -2,7 +2,7 @@
     <uses-permission android:name="android.permission.INTERNET"/>
     <application
         android:label="CloudPlay Mobile"
-        android:theme="@style/Theme.AppCompat.DayNight.DarkActionBar"
+        android:theme="@style/Theme.AppCompat.NoActionBar"
         android:allowBackup="false">
         <activity android:name=".MainActivity" android:exported="true">
             <intent-filter>

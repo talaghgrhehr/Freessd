@@ -3,9 +3,9 @@ package com.example.cloudplay
 import android.content.Context
 import android.database.Cursor
 import android.database.MatrixCursor
-import android.net.Uri
 import android.os.CancellationSignal
 import android.os.ParcelFileDescriptor
+import android.provider.DocumentsContract
 import android.provider.DocumentsContract.Document
 import android.provider.DocumentsContract.Root
 import android.provider.DocumentsProvider
@@ -13,30 +13,35 @@ import android.webkit.MimeTypeMap
 import java.io.FileNotFoundException
 
 class CloudDocumentsProvider : DocumentsProvider() {
-    private lateinit var demo: CloudBackend
+    companion object {
+        const val AUTH = "com.example.cloudplay.documents"
+    }
+
     private lateinit var cache: CacheManager
+    private var tb: TeraBoxBackend? = null
+    private var tbKey: String? = null
+    private var imp: ImportedBackend? = null
 
     private val rootCols = arrayOf(Root.COLUMN_ROOT_ID, Root.COLUMN_FLAGS, Root.COLUMN_ICON, Root.COLUMN_TITLE, Root.COLUMN_DOCUMENT_ID)
     private val docCols = arrayOf(Document.COLUMN_DOCUMENT_ID, Document.COLUMN_DISPLAY_NAME, Document.COLUMN_SIZE,
         Document.COLUMN_MIME_TYPE, Document.COLUMN_LAST_MODIFIED, Document.COLUMN_FLAGS)
 
     override fun onCreate(): Boolean {
-        demo = DemoBackend(context!!)
         cache = CacheManager(context!!)
         return true
     }
 
-    private var tb: TeraBoxBackend? = null
-    private var tbKey: String? = null
-
     private fun backend(): CloudBackend {
         val n = context!!.getSharedPreferences("cfg", Context.MODE_PRIVATE).getString("ndus", null)
-        if (n.isNullOrEmpty()) return demo
-        if (tb == null || tbKey != n) {
-            tb = TeraBoxBackend(context!!, n)
-            tbKey = n
+        if (!n.isNullOrEmpty()) {
+            if (tb == null || tbKey != n) {
+                tb = TeraBoxBackend(context!!, n)
+                tbKey = n
+            }
+            return tb!!
         }
-        return tb!!
+        if (imp == null) imp = ImportedBackend(context!!)
+        return imp!!
     }
 
     override fun isChildDocument(parentDocumentId: String, documentId: String): Boolean = true
@@ -77,6 +82,7 @@ class CloudDocumentsProvider : DocumentsProvider() {
     override fun queryChildDocuments(parentDocumentId: String, projection: Array<out String>?, sortOrder: String?): Cursor {
         val c = MatrixCursor(projection ?: docCols)
         backend().list(parentDocumentId).forEach { c.addEntry(it) }
+        c.setNotificationUri(context!!.contentResolver, DocumentsContract.buildChildDocumentsUri(AUTH, parentDocumentId))
         return c
     }
 

@@ -12,7 +12,7 @@ class CacheManager(private val ctx: Context) {
     @Synchronized
     fun get(backend: CloudBackend, e: CloudEntry): File {
         val f = File(dir, "${backend.javaClass.simpleName}_${e.id.hashCode()}_${e.size}_${e.modified}")
-        if (f.exists() && f.length() == e.size) {
+        if (f.exists() && (e.size <= 0L || f.length() == e.size)) {
             f.setLastModified(System.currentTimeMillis())
             return f
         }
