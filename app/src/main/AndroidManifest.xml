@@ -12,7 +12,7 @@
         </activity>
         <provider
             android:name=".CloudDocumentsProvider"
-            android:authority="com.example.cloudplay.documents"
+            android:authorities="com.example.cloudplay.documents"
             android:exported="true"
             android:grantUriPermissions="true"
             android:permission="android.permission.MANAGE_DOCUMENTS">
