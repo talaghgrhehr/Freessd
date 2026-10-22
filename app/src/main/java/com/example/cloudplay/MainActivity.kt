@@ -213,6 +213,9 @@ class MainActivity : AppCompatActivity() {
     private fun homeView(): View {
         val (sv, col) = scroller()
         val logged = Session.backend(this) != null
+        val hr = java.util.Calendar.getInstance().get(java.util.Calendar.HOUR_OF_DAY)
+        val hello = if (hr < 12) "सुप्रभात ☀" else if (hr < 17) "नमस्ते 👋" else if (hr < 21) "शुभ संध्या 🌆" else "शुभ रात्रि 🌙"
+        col.addView(ui.text(hello, 13f, ui.cyan, true))
         header(col, "CloudPlay", "तुम्हारा TeraBox, फ़ोन की ड्राइव की तरह")
 
         val hero = ui.heroCard()
@@ -284,6 +287,7 @@ class MainActivity : AppCompatActivity() {
         t.setPadding(ui.dp(8), ui.dp(18), ui.dp(8), ui.dp(18))
         t.background = ui.shape(Color.parseColor("#14FFFFFF"), 22, Color.parseColor("#26FFFFFF"))
         t.setOnClickListener { onClick() }
+        ui.press(t)
         return t
     }
 
@@ -352,7 +356,7 @@ class MainActivity : AppCompatActivity() {
             row.orientation = LinearLayout.HORIZONTAL
             row.gravity = Gravity.CENTER_VERTICAL
             row.setPadding(0, ui.dp(10), 0, ui.dp(10))
-            row.addView(ui.text(if (e.isDir) "📁" else "📄", 20f))
+            row.addView(ui.text(ui.icon(e.name, e.isDir), 20f))
             val name = ui.text(e.name, 14f)
             name.maxLines = 1
             name.ellipsize = TextUtils.TruncateAt.END
@@ -551,7 +555,7 @@ class MainActivity : AppCompatActivity() {
                 pb.progressTintList = ColorStateList.valueOf(ui.violet)
                 pb.progressBackgroundTintList = ColorStateList.valueOf(Color.parseColor("#33FFFFFF"))
                 c.addView(pb, ui.lp(8))
-                c.addView(ui.text(ui.fmt(j.done) + " / " + ui.fmt(j.total), 11f, ui.muted), ui.lp(2))
+                c.addView(ui.text(((j.done * 100L) / j.total).toString() + "%  •  " + ui.fmt(j.done) + " / " + ui.fmt(j.total), 11f, ui.muted), ui.lp(2))
             } else if (!j.finished) {
                 c.addView(ui.text("चल रहा है…", 11f, ui.muted), ui.lp(6))
             }
@@ -624,9 +628,14 @@ class MainActivity : AppCompatActivity() {
                 render()
             }, ui.lp(14))
         } else {
-            c.addView(ui.gradButton("TeraBox लॉगिन") { startActivity(Intent(this, LoginActivity::class.java)) }, ui.lp(14))
+            c.addView(ui.gradButton("🌐 ब्राउज़र से लॉगिन") { startActivity(Intent(this, LoginActivity::class.java)) }, ui.lp(14))
         }
         col.addView(c, ui.lp(18))
+
+        col.addView(ui.ghost("TeraBox ऐप खोलो") {
+            val li = packageManager.getLaunchIntentForPackage("com.dubox.drive")
+            if (li != null) startActivity(li) else Toast.makeText(this, "TeraBox ऐप नहीं मिला", Toast.LENGTH_SHORT).show()
+        }, ui.lp(12))
 
         val last = getSharedPreferences("cfg", MODE_PRIVATE).getString("last_status", null)
         if (!last.isNullOrEmpty()) {

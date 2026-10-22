@@ -5,6 +5,8 @@ import android.graphics.Color
 import android.graphics.Typeface
 import android.graphics.drawable.GradientDrawable
 import android.view.Gravity
+import android.view.MotionEvent
+import android.view.View
 import android.view.ViewGroup
 import android.widget.LinearLayout
 import android.widget.TextView
@@ -86,6 +88,7 @@ class Ui(private val c: Context) {
         g.cornerRadius = dp(28).toFloat()
         b.background = g
         b.setOnClickListener { onClick() }
+        press(b)
         return b
     }
 
@@ -95,7 +98,29 @@ class Ui(private val c: Context) {
         b.setPadding(dp(12), dp(13), dp(12), dp(13))
         b.background = shape(Color.parseColor("#14FFFFFF"), 22, Color.parseColor("#40FFFFFF"))
         b.setOnClickListener { onClick() }
+        press(b)
         return b
+    }
+
+    fun press(v: View) {
+        v.setOnTouchListener { x, e ->
+            if (e.action == MotionEvent.ACTION_DOWN) x.alpha = 0.6f
+            else if (e.action == MotionEvent.ACTION_UP || e.action == MotionEvent.ACTION_CANCEL) x.alpha = 1f
+            false
+        }
+    }
+
+    fun icon(name: String, isDir: Boolean): String {
+        if (isDir) return "📁"
+        return when (name.substringAfterLast('.', "").lowercase()) {
+            "mp4", "mkv", "avi", "mov", "webm" -> "🎬"
+            "mp3", "wav", "flac", "m4a", "ogg" -> "🎵"
+            "jpg", "jpeg", "png", "gif", "webp" -> "🖼"
+            "zip", "rar", "7z", "tar", "gz" -> "🗜"
+            "apk", "obb", "exe" -> "📦"
+            "pdf", "doc", "docx", "txt" -> "📄"
+            else -> "📄"
+        }
     }
 
     fun fmt(b: Long): String {
