@@ -58,6 +58,8 @@ class LoginActivity : AppCompatActivity() {
             for (part in ck.split(";")) {
                 val t = part.trim()
                 if (t.startsWith("ndus=") && t.length > 8) {
+                    val dom = if (u.contains("1024terabox")) "1024terabox.com" else if (u.contains("terabox.app")) "terabox.app" else if (u.contains("4funbox")) "4funbox.com" else "terabox.com"
+                    getSharedPreferences("cfg", MODE_PRIVATE).edit().putString("domain", dom).apply()
                     save(t.removePrefix("ndus="))
                     return true
                 }
@@ -144,21 +146,21 @@ class LoginActivity : AppCompatActivity() {
 
             override fun onPageFinished(view: WebView, url: String?) {
                 addr.setText(url ?: "")
-                info.text = "खुला: " + url + (if (lastConsole.isNotEmpty()) "\n" + lastConsole else "")
+                info.text = "खुला: " + (url ?: "").substringBefore('?') + (if (lastConsole.isNotEmpty()) "\n" + lastConsole else "")
             }
 
             override fun onReceivedError(view: WebView, request: WebResourceRequest, error: WebResourceError) {
-                if (request.isForMainFrame) info.text = "एरर: " + error.description + "\n" + request.url
+                if (request.isForMainFrame) info.text = "एरर: " + error.description + "\n" + request.url.toString().substringBefore('?')
             }
 
             override fun onReceivedHttpError(view: WebView, request: WebResourceRequest, errorResponse: WebResourceResponse) {
-                if (request.isForMainFrame) info.text = "HTTP " + errorResponse.statusCode + "\n" + request.url
+                if (request.isForMainFrame) info.text = "HTTP " + errorResponse.statusCode + "\n" + request.url.toString().substringBefore('?')
             }
         }
         web.webChromeClient = object : WebChromeClient() {
             override fun onProgressChanged(view: WebView, newProgress: Int) {
                 prog.progress = newProgress
-                if (newProgress < 100) info.text = "लोड: " + newProgress + "%  " + (view.url ?: "")
+                if (newProgress < 100) info.text = "लोड: " + newProgress + "%  " + (view.url ?: "").substringBefore('?')
             }
 
             override fun onConsoleMessage(m: ConsoleMessage): Boolean {

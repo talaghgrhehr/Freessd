@@ -15,8 +15,9 @@ import java.security.MessageDigest
 import java.util.concurrent.ConcurrentHashMap
 
 class TeraBoxBackend(private val ctx: Context, ndus: String) : CloudBackend {
-    private val host = "https://www.terabox.com"
-    private var uhost = "https://c-all.terabox.com"
+    private val domain = ctx.getSharedPreferences("cfg", Context.MODE_PRIVATE).getString("domain", "1024terabox.com") ?: "1024terabox.com"
+    private val host = "https://www." + domain
+    private var uhost = "https://c-all." + domain
     private val ua = "terabox;1.40.0.132;PC;PC-Windows;10.0.26100;WindowsTeraBox"
     private val cookie = "lang=en; ndus=" + ndus
     private val appQ = "app_id=250528&web=1&channel=dubox&clienttype=0"
