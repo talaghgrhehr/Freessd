@@ -24,11 +24,14 @@ class CloudDocumentsProvider : DocumentsProvider() {
         return true
     }
 
+    override fun isChildDocument(parentDocumentId: String, documentId: String): Boolean =
+        documentId.startsWith(parentDocumentId.trimEnd('/') + "/")
+
     override fun queryRoots(projection: Array<out String>?): Cursor {
         val c = MatrixCursor(projection ?: rootCols)
         c.newRow().apply {
             add(Root.COLUMN_ROOT_ID, "cloud")
-            add(Root.COLUMN_FLAGS, 0)
+            add(Root.COLUMN_FLAGS, Root.FLAG_SUPPORTS_IS_CHILD)
             add(Root.COLUMN_ICON, android.R.drawable.ic_menu_upload)
             add(Root.COLUMN_TITLE, "CloudPlay (TeraBox)")
             add(Root.COLUMN_DOCUMENT_ID, "/")

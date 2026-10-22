@@ -33,7 +33,7 @@ class MainActivity : AppCompatActivity() {
         root.addView(Button(this).apply {
             text = "Files ऐप खोलो"
             setOnClickListener {
-                try { startActivity(Intent(Intent.ACTION_OPEN_DOCUMENT_TREE)) }
+                try { startActivity(Intent(Intent.ACTION_OPEN_DOCUMENT).apply { addCategory(Intent.CATEGORY_OPENABLE); type = "*/*" }) }
                 catch (e: Exception) { Toast.makeText(this@MainActivity, "Files ऐप नहीं मिला", Toast.LENGTH_SHORT).show() }
             }
         })
