@@ -24,6 +24,9 @@ import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import org.json.JSONObject
+import java.net.HttpURLConnection
+import java.net.URL
 
 class LoginActivity : AppCompatActivity() {
     private val h = Handler(Looper.getMainLooper())
@@ -60,12 +63,45 @@ class LoginActivity : AppCompatActivity() {
                 if (t.startsWith("ndus=") && t.length > 8) {
                     val dom = if (u.contains("1024terabox")) "1024terabox.com" else if (u.contains("terabox.app")) "terabox.app" else if (u.contains("4funbox")) "4funbox.com" else "terabox.com"
                     getSharedPreferences("cfg", MODE_PRIVATE).edit().putString("domain", dom).apply()
-                    save(t.removePrefix("ndus="))
-                    return true
+                    verifyAndSave(t.removePrefix("ndus="), dom)
+                    return false
                 }
             }
         }
         return false
+    }
+
+    private var verifying = false
+    private var badToken = ""
+
+    private fun verifyAndSave(v: String, dom: String) {
+        if (verifying || v == badToken) return
+        verifying = true
+        Thread {
+            var ok = false
+            try {
+                val c = URL("https://www." + dom + "/api/quota?checkfree=1&checkexpire=1").openConnection() as HttpURLConnection
+                c.connectTimeout = 15000
+                c.readTimeout = 20000
+                c.setRequestProperty("User-Agent", "terabox;1.40.0.132;PC;PC-Windows;10.0.26100;WindowsTeraBox")
+                c.setRequestProperty("Cookie", "lang=en; ndus=" + v)
+                try {
+                    ok = JSONObject(c.inputStream.bufferedReader().readText()).optInt("errno", -1) == 0
+                } finally {
+                    c.disconnect()
+                }
+            } catch (e: Exception) {
+            }
+            runOnUiThread {
+                verifying = false
+                if (ok) {
+                    save(v)
+                } else {
+                    badToken = v
+                    info.text = "लॉगिन अभी पूरा नहीं हुआ। ईमेल और पासवर्ड से लॉगिन पूरा करो, ऐप अपने आप पहचान लेगा।"
+                }
+            }
+        }.start()
     }
 
     private fun save(v: String) {
