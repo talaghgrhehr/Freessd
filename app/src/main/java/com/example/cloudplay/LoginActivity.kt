@@ -104,6 +104,28 @@ class LoginActivity : AppCompatActivity() {
         }.start()
     }
 
+    private fun forceSave() {
+        val cm = CookieManager.getInstance()
+        cm.flush()
+        val urls = listOfNotNull(
+            web.url, "https://www.1024terabox.com", "https://dm.1024terabox.com",
+            "https://1024terabox.com", "https://www.terabox.com"
+        )
+        for (u in urls) {
+            val ck = cm.getCookie(u) ?: continue
+            for (part in ck.split(";")) {
+                val t = part.trim()
+                if (t.startsWith("ndus=") && t.length > 8) {
+                    val dom = if (u.contains("1024terabox")) "1024terabox.com" else "terabox.com"
+                    getSharedPreferences("cfg", MODE_PRIVATE).edit().putString("domain", dom).apply()
+                    save(t.removePrefix("ndus="))
+                    return
+                }
+            }
+        }
+        Toast.makeText(this, "ndus कुकी नहीं मिली", Toast.LENGTH_LONG).show()
+    }
+
     private fun save(v: String) {
         done = true
         getSharedPreferences("cfg", MODE_PRIVATE).edit().putString("ndus", v).remove("last_status").apply()
@@ -242,6 +264,10 @@ class LoginActivity : AppCompatActivity() {
         root.addView(web, LinearLayout.LayoutParams(match, 0, 1f))
         root.addView(r1, LinearLayout.LayoutParams(match, wrap))
         root.addView(r2, LinearLayout.LayoutParams(match, wrap))
+        val sb = ui.gradButton("✓ लॉगिन हो गया, सेव करो") { forceSave() }
+        val sbp = LinearLayout.LayoutParams(match, wrap)
+        sbp.setMargins(ui.dp(12), 0, ui.dp(12), ui.dp(14))
+        root.addView(sb, sbp)
         setContentView(root)
         go("https://www.terabox.com/main")
         h.postDelayed(poll, 1500)
